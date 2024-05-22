@@ -1,0 +1,65 @@
+name: Build image and push to DockerHub
+
+on:
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  build-image-and-push:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      
+      # If you go to
+      # https://blog.pamelafox.org/2023/03/deploying-containerized-fastapi-app-to.html ,
+      # you will find some basic but also helpful information about `docker buildx`.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Build container image and push it to DockerHub repository
+        uses: docker/build-push-action@v4
+        with:
+          push: true
+          context: .
+          tags: kaloyanmarinov/msdocs-python-flask-azure-container-apps-3:${{ github.sha }}
+
+  deploy-to-existing-azure-container-app:
+    
+    needs: build-image-and-push
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Login via the Azure CLI
+        uses: azure/login@v1
+        with:
+          creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
+      
+      # The following step is a slight adjustment of
+      # the one at
+      # https://github.com/pedrojunqueira/cicd/blob/master/.github/workflows/build-deploy.yml#L59-L69 ,
+      # with the specifics of the adjustment being motivated by
+      # Step 5 in the following anchored section:
+      # https://learn.microsoft.com/en-us/azure/developer/python/tutorial-deploy-python-web-app-azure-container-apps-02?tabs=azure-cli%2Ccreate-database-psql#deploy-the-web-app-to-container-apps
+      - name: Update the Azure Container App (with the specified name)
+        run: |
+          az containerapp up \
+            --name containerapp-m-p-f-a-c-a-3 \
+            --resource-group rg-m-p-f-a-c-a-3 \
+            --image kaloyanmarinov/msdocs-python-flask-azure-container-apps-3:${{ github.sha }} \
+            --environment containerapp-env-m-p-f-a-c-a-3 \
+            --ingress external \
+            --target-port 5000 \
+            --query properties.configuration.ingress.fqdn
