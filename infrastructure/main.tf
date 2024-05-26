@@ -82,7 +82,7 @@ resource "azurerm_container_app" "example" {
   template {
     container {
       name   = "examplecontainerapp"
-      image  = "kaloyanmarinov/msdocs-python-flask-azure-container-apps-3:d19787ba9ce395e9f87fefe6ab6423ea904358a1"
+      image  = "kaloyanmarinov/msdocs-python-flask-azure-container-apps-3:49533f59d4c149f9610b9501df299a4ab29ea1fa"
       cpu    = 0.25
       memory = "0.5Gi"
     }
