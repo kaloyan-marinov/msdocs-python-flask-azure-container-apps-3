@@ -33,7 +33,7 @@ jobs:
         with:
           push: true
           context: .
-          dockerfile: Containerfile
+          file: ./Containerfile
           tags: kaloyanmarinov/msdocs-python-flask-azure-container-apps-3:${{ github.sha }}
 
   # deploy-to-existing-azure-container-app:
