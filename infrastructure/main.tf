@@ -76,6 +76,9 @@ resource "azurerm_container_app" "example" {
     target_port                = 5000
     traffic_weight {
       percentage = 100
+      # The following is added based on the recommendation at
+      # https://github.com/hashicorp/terraform-provider-azurerm/issues/20435#issuecomment-1443418097 .
+      latest_revision = true
     }
   }
 
@@ -85,6 +88,22 @@ resource "azurerm_container_app" "example" {
       image  = "kaloyanmarinov/msdocs-python-flask-azure-container-apps-3:49533f59d4c149f9610b9501df299a4ab29ea1fa"
       cpu    = 0.25
       memory = "0.5Gi"
+      # cpu    = 0.5
+      # memory = "1Gi"
+
+      # cpu    = "0.5"
+      # memory = "1.0Gi"
+
+      # resources {
+      #   requests {
+      #     cpu    = "0.25"
+      #     memory = "0.5Gi"
+      #   }
+      #   limits {
+      #     cpu    = "0.5"
+      #     memory = "1.0Gi"
+      #   }
+      # }
     }
 
     # tags = local.default_tags
