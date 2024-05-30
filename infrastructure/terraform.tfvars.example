@@ -1,0 +1,5 @@
+docker_io_username = # Provide the username of your DockerHub account. (Must be in double quotes.)
+docker_io_access_token = # Provide an access token for your DockerHub account. (Must be in double quotes.)
+
+name_of_container_image = # Provide the name of the container image, which must be in your DockerHub account. (Must be in double quotes.)
+tag_for_container_image = # Provide a concrete tag for the specified container image. (Must be in double quotes.)
