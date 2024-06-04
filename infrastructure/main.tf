@@ -3,11 +3,23 @@
 # Azure Provider source and version being used
 terraform {
   required_providers {
+    linode = {
+      source  = "linode/linode"
+      version = "1.16.0"
+    }
+
     azurerm = {
       source  = "hashicorp/azurerm"
       version = "=3.106.1"
     }
   }
+}
+
+
+
+# Configure the Linode Provider.
+provider "linode" {
+  token = var.linode_personal_access_token
 }
 
 # Configure the Microsoft Azure Provider
@@ -29,7 +41,14 @@ resource "azurerm_service_plan" "s_p" {
   location            = azurerm_resource_group.rg_m_p_f_a_c_a_3.location
   os_type             = "Linux"
   # sku_name            = "P1v2"
-  sku_name            = "F1"
+  # (
+  # According to the resource at
+  # https://learn.microsoft.com/en-us/azure/app-service/app-service-web-tutorial-custom-domain?tabs=root%2Cazurecli :
+  # [To be able to] map an existing custom DNS name to an Azure App Service,
+  # ... the web app's App Service plan must be a paid tier and not Free (F1).
+  # )
+  # sku_name            = "F1"
+  sku_name            = "B1"
 }
 
 resource "azurerm_linux_web_app" "l_w_a" {
@@ -72,4 +91,44 @@ resource "azurerm_linux_web_app" "l_w_a" {
     # https://learn.microsoft.com/en-us/azure/app-service/reference-app-settings?tabs=kudu%2Cdotnet#custom-containers
     "WEBSITES_PORT" = "5000"
   }
+}
+
+
+
+resource "linode_domain_record" "l_d_r_1_txt" {
+  domain_id   = var.linode_id_of_custom_domain
+
+  record_type = "TXT"
+  name        = "asuid.${var.custom_subdomain}"
+  target      = azurerm_linux_web_app.l_w_a.custom_domain_verification_id
+}
+
+resource "linode_domain_record" "l_d_r_2_cname" {
+  domain_id   = var.linode_id_of_custom_domain
+
+  record_type = "CNAME"
+  name        = var.custom_subdomain
+  target      = azurerm_linux_web_app.l_w_a.default_hostname
+}
+
+resource "azurerm_app_service_custom_hostname_binding" "a_s_c_h_b" {
+  hostname            = "${var.custom_subdomain}.${var.custom_domain}"
+  app_service_name    = azurerm_linux_web_app.l_w_a.name
+  resource_group_name = azurerm_resource_group.rg_m_p_f_a_c_a_3.name
+
+  # Ignore ssl_state and thumbprint as they are managed using
+  # azurerm_app_service_certificate_binding.example
+  lifecycle {
+    ignore_changes = [ssl_state, thumbprint]
+  }
+}
+
+resource "azurerm_app_service_managed_certificate" "a_s_m_c" {
+  custom_hostname_binding_id = azurerm_app_service_custom_hostname_binding.a_s_c_h_b.id
+}
+
+resource "azurerm_app_service_certificate_binding" "a_s_c_b" {
+  hostname_binding_id = azurerm_app_service_custom_hostname_binding.a_s_c_h_b.id
+  certificate_id      = azurerm_app_service_managed_certificate.a_s_m_c.id
+  ssl_state           = "SniEnabled"
 }

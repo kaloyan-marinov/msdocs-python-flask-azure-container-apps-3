@@ -20,6 +20,13 @@ $ podman run \
     image-msdocs-python-flask-azure-container-apps-3
 ```
 
+The following assumes that you:
+- have a Linode account
+- own a custom domain
+- manage the custom domain via the _Domains_ section of your Linode account
+  (FYI: that section is referred to as [the Linode DNS Manager](
+    https://www.linode.com/docs/products/networking/dns-manager/
+  ))
 ```bash
 $ cp \
     infrastructure/terraform.tfvars.example \
