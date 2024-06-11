@@ -55,24 +55,40 @@ $ az account list \
     --all \
     --query "[].{TenantID: tenantId, Subscription: name, Default: isDefault}"
 
-# [For each of the subsequent commands,
+# [For each of the subsequent commands,]
 # the provider will select the tenant ID from your default Azure CLI account.
-# If you have more than one tenant listed in the output of `az account list`,
+# If you have more than one tenant listed in the output of `az account list`
 # - for example if you are a guest user in other tenants -
 # you can specify the tenant to use.
 
 $ terraform init
 
 
-$ ARM_TENANT_ID=<provide-the-ID-of-the-tenant-you-wish-to-deploy-to> terraform plan \
-    -var-file=terraform.tfvars.sensitive
 
+$ ARM_TENANT_ID=<provide-the-ID-of-the-tenant-you-wish-to-deploy-to> terraform plan \
+    -var-file=terraform.tfvars.sensitive \
+    -target=linode_domain_record.l_d_r_1_txt \
+    -target=linode_domain_record.l_d_r_2_cname \
+    -out=phase-1.terraform.plan
 
 $ ARM_TENANT_ID=<provide-the-ID-of-the-tenant-you-wish-to-deploy-to> terraform apply \
-    -var-file=terraform.tfvars.sensitive
+    phase-1.terraform.plan
 
 # Confirm the "apply" request issued by the previous command
 # by typing "yes" and pressing [Enter].
+
+
+
+$ ARM_TENANT_ID=<provide-the-ID-of-the-tenant-you-wish-to-deploy-to> terraform plan \
+    -var-file=terraform.tfvars.sensitive \
+    -out=phase-2.terraform.plan
+
+$ ARM_TENANT_ID=<provide-the-ID-of-the-tenant-you-wish-to-deploy-to> terraform apply \
+    phase-2.terraform.plan
+
+# Confirm the "apply" request issued by the previous command
+# by typing "yes" and pressing [Enter].
+
 
 
 $ ARM_TENANT_ID=<provide-the-ID-of-the-tenant-you-wish-to-deploy-to> terraform destroy \
